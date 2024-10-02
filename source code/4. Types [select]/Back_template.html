@@ -1,0 +1,86 @@
+<div id="backwrap" class="frontside">
+	{{FrontSide}}
+</div>
+<script>
+//autorate thanks to https://github.com/Eltaurus-Lt/Anki-Card-Templates/blob/main/Source code/Template Back (script only).js
+function autorateAgain() {
+	if (platform === 'desk') {
+		pycmd('ease1');
+	} else if (platform === 'android') {
+		buttonAnswerEase1();
+	}
+	console.log("autorated 'again'");
+}
+
+function autorateGood() {
+	if (platform === 'desk') {
+		pycmd('ease3');
+	} else if (platform === 'android') {
+		buttonAnswerEase3();
+	}
+	console.log("autorated 'good'");
+}
+
+function setPokeSound(value) {
+	pokeSound = value;
+	setupSound();
+}
+
+</script>
+<script async>
+//Autorate times
+pokeAnsTimeCorrect = 1500; //If you get it correct, advance faster
+pokeAnsTimeWrong = 4000; //If you get it wrong, see the answer for a little more
+pokeAutoAns = true; //Set this to false if you don't want to autorate answer
+setPokeSound(true); //Set this to false if you dont want to play sound automatically
+
+var topbarBack = document.querySelector("#backwrap > section > article.topbar")
+var pokeClickStorage = sessionStorage.getItem("poke-clicks")
+var pokeAnsDoc = document.querySelector(".pokeAnswer")
+
+
+pokeTypeInfo = "type is:";
+pokeTypesDoc.type1.innerText = "{{Type1}}";
+if (pokeTypesDoc.type2) {
+	pokeTypeInfo = "types are:"
+	pokeTypesDoc.type2.innerText = "{{Type2}}";
+}
+
+if (pokeClickStorage === "correct") {
+	document.querySelector("article.types").style.display = "none";
+	setTopbarStyles(topbarBack, "rgb(93, 231, 192)", "rgb(0, 167, 120)");
+	pokeAnsDoc.style.color = "green";
+	pokeAnsDoc.innerText = "Correct!";
+	sessionStorage.setItem("poke-clicks", "none");
+	if (pokeAutoAns) {
+		setTimeout(autorateGood, pokeAnsTimeCorrect);
+	}
+} else if (pokeClickStorage === "almost") {
+	setTopbarStyles(topbarBack, "rgb(255, 213, 195)", "rgb(237, 107, 53)");
+	pokeAnsDoc.style.color = "#ed6b35";
+	pokeAnsDoc.innerText = "Almost!";
+	sessionStorage.setItem("poke-clicks", "none");
+	if (pokeAutoAns) {
+		setTimeout(autorateAgain, pokeAnsTimeWrong);
+	}
+} else if (pokeClickStorage === "wrong") {
+	setTopbarStyles(topbarBack, "rgb(255, 191, 188)", "rgb(177, 48, 57)");
+	pokeAnsDoc.style.color = "red";
+	pokeAnsDoc.innerHTML = `Correct ${pokeTypeInfo}`;
+	sessionStorage.setItem("poke-clicks", "none");
+	if (pokeAutoAns) {
+		setTimeout(autorateAgain, pokeAnsTimeWrong);
+	}
+} else {
+	setTopbarStyles(topbarBack, "rgb(255, 191, 188)", "rgb(177, 48, 57)");
+	pokeAnsDoc.style.display = "none";
+	console.log("No answer")
+	setTimeout(autorateAgain, pokeAnsTimeWrong);
+}
+
+if (!pokeNightMode) {
+		document.querySelector(".pokeAnswer").style.backgroundColor = "black";
+}
+
+applyTypeColors();
+</script>

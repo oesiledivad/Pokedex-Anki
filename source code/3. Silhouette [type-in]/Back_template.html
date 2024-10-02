@@ -1,0 +1,148 @@
+<div id="backwrap" class="frontside">
+	{{FrontSide}}
+</div>
+
+<script>
+function setPokeSound(value) {
+        pokeSound = value;
+        setupSound();
+    }
+
+pokeAnsTimeCorrect = 1500; //If you get it correct, advance faster
+pokeAnsTimeWrong = 4000; //If you get it wrong, see the answer for a little more
+pokeAutoAns = true; //Set this to false if you don't want to autorate answer
+setPokeSound(true); //Set this to false if you dont want to play sound automatically
+
+  if (pokeAutoAns) {
+    console.log('Autorate answers enabled');
+  } else {
+    console.log('Autorate answers disabled');
+  }
+</script>
+
+<script async>
+//autorate thanks to https://github.com/Eltaurus-Lt/Anki-Card-Templates/blob/main/Source code/Template Back (script only).js
+function autorateAgain() {
+	if (platform === 'desk') {
+		pycmd('ease1');
+	} else if (platform === 'android') {
+		buttonAnswerEase1();
+	}
+	console.log("autorated 'again'");
+}
+
+function autorateGood() {
+	if (platform === 'desk') {
+		pycmd('ease3');
+	} else if (platform === 'android') {
+		buttonAnswerEase3();
+	}
+	console.log("autorated 'good'");
+}
+
+androidAnswer = sessionStorage.getItem("android-answer");
+
+function showResult(resultHTML) {
+	const pokeAnswer = document.querySelector(".pokeAnswer");
+	pokeAnswer.innerHTML = resultHTML;
+}
+
+function normalizeInput(input) {
+	return input.replace(/^0+/, ''); // 0151 -> 151
+}
+
+function cleanAnswer(answer) {
+	// Remove ♀, ♂, "-male"
+	return answer.replace(/[♀♂]/gi, '').replace(/-male/gi, '').trim();
+}
+
+function showFeedback(correctAnswer, normalizedDexAnswer) {
+	var nothingSpan = `<span style="color: red;">${correctAnswer}</span>`;
+	var dexMatchSpan = "<span style='color: green;'>Correct!</span>";
+	var alphaMatchSpan = "<span style='color: green;'>Correct!</span>";
+
+	var almostMatchSpan = function(typedAnswer, missingPart) {
+		return `Almost!<br><span style="color: green;">${typedAnswer}<span style="color: red;">${missingPart}</span></span>`;
+	};
+
+	var wrongDexMatchSpan = `<span style="font-size: 14px; color: red;">Wrong</span><br><span style="color: red;">#${normalizedDexAnswer.padStart(4, '0')}</span>`;
+	var notNumSpan = `<span style="font-size: 14px; color: red;">Wrong</span><br><span style="color: red;">${correctAnswer}</span>`;
+
+	return {
+		nothing: nothingSpan,
+		correct: dexMatchSpan,
+		alphaCorrect: alphaMatchSpan,
+		almost: almostMatchSpan,
+		wrongDex: wrongDexMatchSpan,
+		notNumeric: notNumSpan
+	};
+}
+
+function checkAnswer() {
+	const correctAnswerRaw = pokeNameAns.toUpperCase();
+	const dexAnswer = pokeDexNumAns.toUpperCase();
+	
+	// Only tested on android and windows
+	var typedAnswer;
+	if (platform === "android" && androidAnswer) {
+		typedAnswer = androidAnswer;
+	} else {
+		typedAnswer = typeof getTypedAnswer === 'function' ? getTypedAnswer() : "";
+	}
+
+	typedAnswer = typedAnswer || "";
+
+	const correctAnswer = cleanAnswer(correctAnswerRaw);
+	const normalizedDexAnswer = normalizeInput(dexAnswer.replace('#', ''));
+	const normalizedTypedAnswer = typedAnswer ? normalizeInput(typedAnswer.toUpperCase()) : '';
+
+	var resultHTML = '';
+	console.log(`Typed Answer: ${typedAnswer}`);
+	console.log(`Correct Answer: ${correctAnswer}`,`dexAnswer: ${normalizedDexAnswer}`);
+
+	const feedback = showFeedback(correctAnswer, normalizedDexAnswer);
+
+	if (typedAnswer === "") {
+		resultHTML = feedback.nothing;
+		if (pokeAutoAns) {
+			setTimeout(autorateAgain, pokeAnsTimeWrong);
+		}
+	} else if (normalizedTypedAnswer === normalizedDexAnswer) {
+		resultHTML = feedback.correct;
+		if (pokeAutoAns) {
+			setTimeout(autorateGood, pokeAnsTimeCorrect);
+		}
+	} else if (!/^\d+$/.test(normalizedTypedAnswer) && normalizedTypedAnswer === correctAnswer) {
+		resultHTML = feedback.alphaCorrect;
+		if (pokeAutoAns) {
+			setTimeout(autorateGood, pokeAnsTimeCorrect);
+		}
+	} else if (correctAnswer.startsWith(normalizedTypedAnswer)) {
+		var missingPart = correctAnswer.substring(normalizedTypedAnswer.length);
+		resultHTML = feedback.almost(typedAnswer, missingPart);
+		if (pokeAutoAns) {
+			setTimeout(autorateAgain, pokeAnsTimeWrong);
+		}
+	} else {
+		var isNumericInput = /^\d+$/.test(normalizedTypedAnswer);
+
+		if (isNumericInput) {
+			resultHTML = feedback.wrongDex;
+		} else {
+			resultHTML = feedback.notNumeric;
+		}
+		if (pokeAutoAns) {
+			setTimeout(autorateAgain, pokeAnsTimeWrong);
+		}
+	}
+
+	showResult(resultHTML);
+}
+
+checkAnswer();
+
+
+if (platform === "android") {
+	sessionStorage.setItem("android-answer", "");
+}
+</script>

@@ -1,0 +1,157 @@
+<section class="dex">
+	<article class="topbar">
+		<span class="number">#{{DexNumber}}</span>
+		<span class="name answer">{{Name}}</span>
+	</article>
+	<article class="img" id="pokemonImage">
+    {{Image}}
+		<audio id="soundCry" src="{{SoundCry}}" preload="auto"></audio>
+	</article>
+	<article class="types">
+		<div class="type" id="type1"> [...] </div>
+		<!-- {{#Type2}} -->
+		<div class="type" id="type2"> [...] </div>
+		<!-- {{/Type2}} -->
+	</article>
+	<div>
+		<span class="gen">Gen. {{Generation}}</span>
+	</div>
+</section>
+<script>
+//determine card side
+//https://github.com/Eltaurus-Lt/Anki-Card-Templates/blob/main/Source%20code/Template%20Front.html#L36
+wrap = document.getElementById('backwrap');
+isFrontSide = !wrap;
+</script>
+<script>
+var pokeSound = false; // Change to false if you don't want it to play automatically
+
+function applyTypeColors() {
+	var typesAndColors = {
+		electric: 'var(--electric-color)',
+		water: 'var(--water-color)',
+		grass: 'var(--grass-color)',
+		ice: 'var(--ice-color)',
+		fighting: 'var(--fighting-color)',
+		poison: 'var(--poison-color)',
+		ground: 'var(--ground-color)',
+		flying: 'var(--flying-color)',
+		psychic: 'var(--psychic-color)',
+		bug: 'var(--bug-color)',
+		rock: 'var(--rock-color)',
+		ghost: 'var(--ghost-color)',
+		dragon: 'var(--dragon-color)',
+		dark: 'var(--dark-color)',
+		steel: 'var(--steel-color)',
+		fairy: 'var(--fairy-color)',
+		fire: 'var(--fire-color)',
+		normal: 'var(--normal-color)'
+	};
+
+	var typeFields = document.getElementsByClassName("type");
+	for (var i = 0; i < typeFields.length; i++) {
+		var textElement = typeFields[i].innerHTML.trim().toLowerCase();
+		typeFields[i].style.backgroundColor = typesAndColors[textElement] || '#AAAA99';
+		typeFields[i].style.boxShadow = `0 0 8px ${typesAndColors[textElement]}`
+	}
+}
+
+var imageContainer = document.getElementById('pokemonImage');
+var soundCry = document.getElementById('soundCry');
+var isPlaying = false;
+
+function playSound() {
+	if (!isPlaying) {
+		isPlaying = true;
+		soundCry.currentTime = 0;
+		imageContainer.classList.add('shake');
+		soundCry.play().catch(function(error) {
+			console.error('Error playing sound:', error);
+		});
+	}
+}
+
+function handleSoundEnd() {
+	isPlaying = false;
+	imageContainer.classList.remove('shake');
+}
+
+function setupSound() {
+	if (imageContainer && soundCry) {
+		
+		imageContainer.removeEventListener('mouseover', playSound);
+		imageContainer.removeEventListener('click', playSound);
+		soundCry.removeEventListener('ended', handleSoundEnd);
+
+
+		imageContainer.addEventListener('mouseover', playSound);
+		imageContainer.addEventListener('click', playSound);
+		soundCry.addEventListener('ended', handleSoundEnd);
+
+		// playSound automatically if pokeSound it's true
+		if (pokeSound) {
+			setTimeout(playSound, 700);
+		}
+	} else {
+		console.warn('pokemonImage or soundCry element not found, listeners not added.');
+	}
+}
+
+function setupAnkiSoundColors() {
+	applyTypeColors();
+	setupSound();
+	//console.log(pokeSound)
+}
+
+if (isFrontSide) {
+	setupAnkiSoundColors();
+}
+</script>
+<script>
+function shuffleImage() {
+	const imageContainer = document.getElementById('pokemonImage');
+
+	// Create an array of possible image sources
+	const images = ['pkmn_0201.png']; // Default image
+	for (let i = 1; i <= 27; i++) {
+		images.push(`pkmn_0201_0${i}.png`); // pkmn_0201_01.png to pkmn_0201_27.png
+	}
+
+	// Randomly select an image from the array
+	const randomIndex = Math.floor(Math.random() * images.length);
+	const imageSrc = images[randomIndex];
+
+	// Image and SoundCry
+	imageContainer.innerHTML = `
+        <img src="${imageSrc}" alt="Pokemon Image">
+        <audio id="soundCry" src="{{SoundCry}}" preload="auto"></audio>
+    `;
+
+}
+
+function checkAndShuffleImage() {
+	const dexNumber = '{{DexNumber}}';
+	if (dexNumber === '0201') {
+		shuffleImage();
+		//setupSound();
+	}
+}
+
+checkAndShuffleImage();
+</script>
+
+<script>
+var pokeType1 = "{{Type1}}";
+var pokeType2 = "{{Type2}}";
+
+//Add answer to the back
+if (!isFrontSide) {
+	document.getElementById("type1").innerText = pokeType1;
+
+	if (pokeType2) {
+		document.getElementById("type2").innerText = pokeType2;
+	}
+
+	applyTypeColors();
+}
+</script>
